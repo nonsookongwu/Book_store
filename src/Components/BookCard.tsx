@@ -10,16 +10,16 @@ import { capitalizeFirstLetter, formatAmount } from "../utils/helperFunctions";
 
 interface Props {
   book: Books;
+  onOpenModal: () => void;
 }
 
-const BookCard = ({ book }: Props) => {
+const BookCard = ({ book, onOpenModal }: Props) => {
+  const { mutate, isPending } = useDeleteBooks({ book });
 
-  const { mutate, isPending } = useDeleteBooks({ book })
-  
   const handleMutate = () => {
-    mutate(book.bookTitle)
-  }
-  
+    mutate(book.bookTitle);
+  };
+
   const handleOpenAlert = () => {
     Alert.alert(
       "Deleting Book",
@@ -33,7 +33,7 @@ const BookCard = ({ book }: Props) => {
         { text: "OK", onPress: handleMutate },
       ]
     );
-  }
+  };
 
   return (
     <View style={styles.container}>
@@ -47,14 +47,14 @@ const BookCard = ({ book }: Props) => {
       <View style={styles.detailsContainer}>
         <View style={styles.topWrapper}>
           <View style={styles.textContainer}>
-            <SubTitleText fontWeight="700">{`${capitalizeFirstLetter(book.bookTitle)}`}</SubTitleText>
+            <SubTitleText fontWeight="700">{`${book.bookTitle}`}</SubTitleText>
             <SmallText textColor="#888">{`by ${book.name_of_author}`}</SmallText>
             <SubTitleText textColor="#25a" fontWeight="700">
               {`${formatAmount(+book.bookPrice)}`}
             </SubTitleText>
           </View>
           <View style={styles.iconContainer}>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity style={styles.iconButton} onPress={onOpenModal}>
               <Feather name="edit-3" size={20} color="#25a" />
             </TouchableOpacity>
             <TouchableOpacity

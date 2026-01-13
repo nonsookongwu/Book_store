@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     height: "100%",
+    width: "100%",
     backgroundColor: "#75563B",
     borderRadius: s(8),
     alignItems: "center",

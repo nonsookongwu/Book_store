@@ -4,7 +4,7 @@ import CustomSafeAreaView from '../Components/CustomSafeAreaView';
 import BookCard from '../Components/BookCard';
 import { s, vs } from 'react-native-size-matters';
 import TitleText from '../Components/CustomTexts/TitleText';
-import useGetBooks from '../hooks/useGetBooks';
+import useGetBooks, { Books } from '../hooks/useGetBooks';
 import SmallText from '../Components/CustomTexts/SmallText';
 import { onlineManager } from "@tanstack/react-query";
 import * as Network from "expo-network";
@@ -14,6 +14,7 @@ import AddBookScreen from './AddBookScreen';
 const HomeScreen = () => {
 
     const [isModalVisible, setIsModalVisible] = useState(false)
+    const [SelectedBook, setSelectedBook] = useState<Books| undefined>()
 //    onlineManager.setEventListener((setOnline) => {
 //      const eventSubscription = Network.addNetworkStateListener((state) => {
 //        setOnline(!!state.isConnected);
@@ -23,9 +24,15 @@ const HomeScreen = () => {
 
     const { data, isLoading, error, isError, refetch, isFetching } = useGetBooks();
 
-    const handleToggleModal = () => {
+  const handleToggleModal = () => {
+      setSelectedBook(undefined)
         setIsModalVisible((prev)=> !prev)
     }
+  
+  const handleEdit = (book: Books) => {
+    setSelectedBook(book)
+    setIsModalVisible((prev) => !prev);
+  }
     
     // console.log(data)
     
@@ -46,7 +53,9 @@ const HomeScreen = () => {
           <FlatList
             data={data}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <BookCard book={item} />}
+            renderItem={({ item }) => (
+              <BookCard onOpenModal={() => handleEdit(item)} book={item} />
+            )}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
               paddingVertical: vs(20),
@@ -59,10 +68,13 @@ const HomeScreen = () => {
           />
         )}
       </View>
-        <RoundButton onPress={handleToggleModal} />
-        <Modal animationType="slide" visible={isModalVisible}>
-          <AddBookScreen onCloseModal={handleToggleModal} />
-        </Modal>
+      <RoundButton onPress={handleToggleModal} />
+      <Modal animationType="slide" visible={isModalVisible}>
+        <AddBookScreen
+          selectedBook={SelectedBook}
+          onCloseModal={handleToggleModal}
+        />
+      </Modal>
     </CustomSafeAreaView>
   );
 }

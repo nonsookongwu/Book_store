@@ -17,3 +17,8 @@ export const formatAmount = (amount: number | undefined) => {
   }).format(amount);
   return formattedAmount;
 };
+
+export const formatNumber = (value: number | string) => {
+  const rawValue = value?.toString().replace(/\D/g, ""); // Remove non-numeric characters
+  return new Intl.NumberFormat().format(Number(rawValue)) || "";
+};

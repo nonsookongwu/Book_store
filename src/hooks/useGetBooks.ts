@@ -113,17 +113,23 @@ export const useDeleteBooks = (query: DeleteQuery) => {
   });
 };
 
+interface createBookVariable{
+  newBook: Books;
+  bookTitle: string;
+  onCloseModal: () => void;
+}
 
-export const useAddBook = (newBook: Books) => {
+export const useAddBook = () => {
   const queryClient = useQueryClient();
-  const payload = {
-    name_of_author: newBook.name_of_author,
-    bookCover: newBook.bookCover,
-    bookTitle: newBook.bookTitle,
-    bookPrice: newBook.bookPrice,
-    sellerEmail: newBook.sellerEmail,
-  };
-  const deleteBook = async (): Promise<Books[] | undefined> => {
+  
+  const createBook = async (newBook: Books): Promise<Books[] | undefined> => {
+    const payload = {
+      name_of_author: newBook.name_of_author,
+      bookCover: newBook.bookCover,
+      bookTitle: newBook.bookTitle,
+      bookPrice: newBook.bookPrice,
+      sellerEmail: newBook.sellerEmail,
+    };
     try {
       const result = await axios.post(`${baseURL}`, payload);
       //   console.log(result)
@@ -137,32 +143,111 @@ export const useAddBook = (newBook: Books) => {
       throw new Error(axiosError.message);
     }
   };
-  return useMutation({
-    mutationFn: deleteBook,
-    onSuccess: () => {
-      Alert.alert(`Adding a Book`, `${newBook.bookTitle} has been Added Successfully`);
+  return useMutation<
+    unknown,
+    Error,
+    createBookVariable,
+    { previousBooks: Books[] | undefined }
+  >({
+    mutationFn: async (variable) => createBook(variable.newBook),
+    onSuccess: (_data, variable) => {
+      Alert.alert(
+        `Adding a Book`,
+        `${variable.bookTitle} has been Added Successfully`
+      );
       // query.onCloseModal()
       // queryClient.invalidateQueries({ queryKey: ["books"] });
     },
-    onMutate: async () => {
+    onMutate: async (variable) => {
       await queryClient.cancelQueries({ queryKey: ["books"] });
-      // query.onCloseModal();
+      variable.onCloseModal();
       const previousBooks = queryClient.getQueryData<Books[]>(["books"]);
       queryClient.setQueryData<Books[]>(["books"], (old) => {
-        if (!old) return [newBook];
-        return [newBook, ...old];
+        if (!old) return [variable.newBook];
+        return [variable.newBook, ...old];
       });
 
       return { previousBooks };
     },
 
-    onError: (error, id, context) => {
+    onError: (error, variable, context) => {
       //the context is what onmutate returned
-      console.log(id);
+      //variable is what we pass to the mutate function
       queryClient.setQueryData<Books[]>(["books"], context?.previousBooks);
       Alert.alert(
-        `Adding ${capitalizeFirstLetter(newBook.bookTitle)}`,
-        `${capitalizeFirstLetter(newBook.bookTitle)} failed to add because ${
+        `Adding ${capitalizeFirstLetter(variable.bookTitle)}`,
+        `${capitalizeFirstLetter(variable.bookTitle)} failed to add because ${
+          error.message
+        }`
+      );
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["books"] });
+    },
+  });
+};
+
+
+export const useEditBook = () => {
+  const queryClient = useQueryClient();
+  
+  const editBook = async (newBook: Books): Promise<Books[] | undefined> => {
+    const payload = {
+      name_of_author: newBook.name_of_author,
+      bookCover: newBook.bookCover,
+      bookTitle: newBook.bookTitle,
+      bookPrice: newBook.bookPrice,
+      sellerEmail: newBook.sellerEmail,
+    };
+    try {
+      const result = await axios.patch(`${baseURL}`, payload);
+      //   console.log(result)
+
+      if (result.status === 200) {
+        return result.data;
+      }
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      // console.log(axiosError);
+      throw new Error(axiosError.message);
+    }
+  };
+  return useMutation<
+    unknown,
+    Error,
+    createBookVariable,
+    { previousBooks: Books[] | undefined }
+  >({
+    mutationFn: async (variable) => editBook(variable.newBook),
+    onSuccess: (_data, variable) => {
+      Alert.alert(
+        `Editing a Book`,
+        `${variable.bookTitle} has been edited Successfully`
+      );
+      // query.onCloseModal()
+      // queryClient.invalidateQueries({ queryKey: ["books"] });
+    },
+    onMutate: async (variable) => {
+      await queryClient.cancelQueries({ queryKey: ["books"] });
+      variable.onCloseModal();
+      const previousBooks = queryClient.getQueryData<Books[]>(["books"]);
+      queryClient.setQueryData<Books[]>(["books"], (old) => {
+        if (!old) return [variable.newBook];
+        const others = old?.filter((book)=> book.id !== variable.newBook.id)
+        return [variable.newBook, ...others];
+      });
+
+      return { previousBooks };
+    },
+
+    onError: (error, variable, context) => {
+      //the context is what onmutate returned
+      //variable is what we pass to the mutate function
+      queryClient.setQueryData<Books[]>(["books"], context?.previousBooks);
+      Alert.alert(
+        `Editing ${capitalizeFirstLetter(variable.bookTitle)}`,
+        `${capitalizeFirstLetter(variable.bookTitle)} failed to edit because ${
           error.message
         }`
       );

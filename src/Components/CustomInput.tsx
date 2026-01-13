@@ -4,6 +4,7 @@ import { s, vs } from "react-native-size-matters";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import SmallText from "./CustomTexts/SmallText";
 import { Control, Controller, FieldError, FieldValues, Path } from "react-hook-form";
+import { formatNumber } from "../utils/helperFunctions";
 
 interface Props<T extends FieldValues> {
   iconName?: ComponentProps<typeof FontAwesome5>["name"];
@@ -19,6 +20,7 @@ interface Props<T extends FieldValues> {
   inputError: FieldError | undefined;
   control: Control<T>;
   name: Path<T>;
+  watchedAmount?: string | undefined;
 }
 
 const CustomInput = <T extends FieldValues>({
@@ -26,7 +28,7 @@ const CustomInput = <T extends FieldValues>({
   iconName,
   placeHolder,
   keyboardType = "default",
-  inputError, control, name
+  inputError, control, name, watchedAmount
 }: Props<T>) => {
   const [togglePassword, setTogglePassword] = useState(isPassword);
 
@@ -51,7 +53,7 @@ const CustomInput = <T extends FieldValues>({
               secureTextEntry={togglePassword}
               onChangeText={onChange}
               onBlur={onBlur}
-              value={value}
+              value={watchedAmount ? formatNumber(watchedAmount) : value}
               ref={ref}
             />
           )}
